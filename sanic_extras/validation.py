@@ -28,9 +28,6 @@ async def json_data_validation(
             response: HTTPResponse = await func(request, *args, **kwargs)
             
             if response_model is not None:
-                if response is None:
-                    raise ServerError("Internal server error")
-
                 try:
                     response_body = response.body_dict
                 except AttributeError:
@@ -39,7 +36,7 @@ async def json_data_validation(
                 try:
                     response_model(**response_body)
                 except ValidationError:
-                    raise InvalidUsage("Internal server error")
+                    raise ServerError("Internal server error")
 
             return response
         return check_validation
