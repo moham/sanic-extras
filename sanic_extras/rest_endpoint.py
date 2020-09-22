@@ -8,6 +8,15 @@ from sanic.exceptions import InvalidUsage, ServerError, Unauthorized, Forbidden
 
 
 class RestEndpoint:
+    __slots__ = (
+        'login_required',
+        'required_scopes',
+        'request_model',
+        'response_model',
+        'response_headers',
+        'response_status'
+    )
+
     def __init__(
         self,
         *,

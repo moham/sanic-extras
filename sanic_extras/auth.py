@@ -186,7 +186,7 @@ class JWT():
 
         return payload
 
-    async def decoder_middleware(self, request: Request) -> None:
+    async def sanic_middleware(self, request: Request) -> None:
         oauth2_http = OAuth2HTTP(
             request,
             token_type=self._token_type,
