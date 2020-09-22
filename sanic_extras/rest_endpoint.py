@@ -5,6 +5,10 @@ from sanic.request import Request
 from sanic.response import json as json_response
 from sanic.response import empty as empty_response
 from sanic.exceptions import InvalidUsage, ServerError, Unauthorized, Forbidden
+from .log import Logging
+
+
+logger = Logging().get_logger("sanic_extras.restendpoint")
 
 
 class RestEndpoint:
@@ -37,6 +41,7 @@ class RestEndpoint:
     def check_auth(self, request: Request) -> None:
         try:
             if request.ctx.request_user is None:
+                logger.error("unauthorized")
                 raise Unauthorized("Unauthorized")
 
             if self.required_scopes:
@@ -44,20 +49,24 @@ class RestEndpoint:
                     set(self.required_scopes) & 
                     set(request.ctx.request_user.scopes)
                 ):
+                    logger.error("forbidden")
                     raise Forbidden("Forbidden")
         except AttributeError:
+            logger.error("unauthorized")
             raise Unauthorized("Unauthorized")
 
     def check_request_model(self, request: Request) -> None:
         try:
             request.ctx.request_data = self.request_model(**request.json)
         except ValidationError as e:
+            logger.error(f"request_validation_error {e}")
             raise InvalidUsage(e.json())
 
     def check_response_model(self, response: Dict) -> None:
         _, _, validation_error = validate_model(self.response_model, response)
 
         if validation_error:
+            logger.error(f"response_validation_error {validation_error}")
             raise ServerError("Bad response")
 
     def __call__(self, handler: Awaitable) -> Awaitable:
@@ -70,9 +79,10 @@ class RestEndpoint:
                 self.check_request_model(request)
 
             response: Optional[Dict] = await handler(request, *args, **kwargs)
-            
+
             if self.response_model:
                 if response is None:
+                    logger.error(f"response_validation_error response is none")
                     raise ServerError("Bad response")
                 self.check_response_model(response)
 
@@ -81,7 +91,7 @@ class RestEndpoint:
                     status=self.response_status,
                     headers=self.response_headers
                 )
-            else:  
+            else:
                 return json_response(
                     response,
                     status=self.response_status,

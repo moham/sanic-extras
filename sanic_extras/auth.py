@@ -3,6 +3,10 @@ from datetime import datetime, timedelta
 import jwt
 from sanic.request import Request
 from pydantic import BaseModel, ValidationError
+from .log import Logging
+
+
+logger = Logging().get_logger("sanic_extras.auth")
 
 
 class BaseUserAuthModel(BaseModel):
@@ -38,11 +42,13 @@ class OAuth2HTTP:
 
     def _extract_token(self) -> Optional[str]:
         if self._http_auth_header not in self._http_request.headers:
+            logger.warning("not_set_auth_header")
             return None
         
         content: List[str] = self._http_request[self._http_auth_header].split()
 
         if len(content) != 2 or content[0].title() != self._token_type:
+            logger.warning("bad_auth_header")
             return None
 
         return content[1]
@@ -145,7 +151,8 @@ class JWT():
                 payload=payload,
                 key=self._decode_key,
                 algorithm=self._algorithm)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"jwt_encode_error {e}")
             token = None
 
         return token
@@ -164,24 +171,28 @@ class JWT():
                 audience=self._audience,
                 algorithms=[self._algorithm]
             )
-        except Exception:
+        except Exception as e:
+            logger.warning(f"jwt_decode_error {e}")
             return None
         
         if self._filter:
             try:
                 payload = self._filter(payload)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"jwt_payload_filter_error {e}")
                 return None
         else:
             try:
                 payload = payload[self._payload_key]
-            except KeyError:
+            except KeyError as e:
+                logger.warning(f"jwt_payload_key_not_found {e}")
                 return None
 
         if payload_model:
             try:
                 payload = payload_model(**payload)
-            except ValidationError:
+            except ValidationError as e:
+                logger.warning(f"jwt_payload_validation_error {e}")
                 return None
 
         return payload
