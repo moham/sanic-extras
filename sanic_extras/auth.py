@@ -48,7 +48,7 @@ class OAuth2HTTP:
         content: List[str] = self._http_request[self._http_auth_header].split()
 
         if len(content) != 2 or content[0].title() != self._token_type:
-            logger.warning("bad_auth_header")
+            logger.warning(f"bad_auth_header {content}")
             return None
 
         return content[1]
