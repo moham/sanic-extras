@@ -109,10 +109,12 @@ class TestRestEndpoint(unittest.TestCase):
             pass
 
         response: HTTPResponse = self.loop.run_until_complete(endpoint(request))
-        self.assertDictContainsSubset(success_headers, response.headers)
-        
-        with self.assertRaises(AssertionError):
-            self.assertDictContainsSubset(failed_headers, response.headers)
+        self.assertTrue(
+            set(success_headers.items()).issubset(set(response.headers.items()))
+        )
+        self.assertFalse(
+            set(failed_headers.items()).issubset(set(response.headers.items()))
+        )
 
     def test_response_status(self) -> None:
         request = Request()

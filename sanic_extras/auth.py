@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, Dict, Union, Type, Callable
 from datetime import datetime, timedelta
 import jwt
@@ -7,6 +8,7 @@ from .log import Logging
 
 
 logger = Logging().get_logger("sanic_extras.auth")
+logger.addHandler(logging.NullHandler())
 
 
 class BaseUserAuthModel(BaseModel):

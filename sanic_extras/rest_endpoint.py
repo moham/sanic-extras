@@ -1,4 +1,5 @@
 import functools
+import logging
 from typing import Optional, Awaitable, List, Dict
 from pydantic import BaseModel, ValidationError, validate_model
 from sanic.request import Request
@@ -9,6 +10,7 @@ from .log import Logging
 
 
 logger = Logging().get_logger("sanic_extras.restendpoint")
+logger.addHandler(logging.NullHandler())
 
 
 class RestEndpoint:
